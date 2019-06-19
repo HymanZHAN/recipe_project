@@ -1,0 +1,20 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+django = "<3.0"
+djangorestframework = "*"
+
+[dev-packages]
+pylint = "*"
+"autopep8" = "*"
+pylint-django = "*"
+rope = "*"
+ipython = "*"
+django-extensions = "*"
+django-debug-toolbar = "*"
+
+[requires]
+python_version = "3.7"
