@@ -8,13 +8,15 @@ django = "<3.0"
 djangorestframework = "*"
 
 [dev-packages]
-pylint = "*"
-"autopep8" = "*"
-pylint-django = "*"
 rope = "*"
 ipython = "*"
 django-extensions = "*"
 django-debug-toolbar = "*"
+black = "*"
+flake8 = "*"
 
 [requires]
 python_version = "3.7"
+
+[pipenv]
+allow_prereleases = true
