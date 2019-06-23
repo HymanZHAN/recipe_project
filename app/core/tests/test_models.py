@@ -13,7 +13,7 @@ class ModelTests(TestCase):
         self.assertTrue(user.check_password(password))
 
     def test_new_user_email_normalized(self):
-        """Test the email of a new user is normalized."""
+        """Test the email domain of a new user is normalized."""
         email = "test@EXAMple.com"
         user = get_user_model().objects.create_user(email, "test123")
 
