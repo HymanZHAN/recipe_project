@@ -6,7 +6,7 @@ name = "pypi"
 [packages]
 django = "<3.0"
 djangorestframework = "*"
-psycopg2 = "*"
+psycopg2-binary = "*"
 
 [dev-packages]
 rope = "*"
@@ -15,6 +15,7 @@ django-extensions = "*"
 django-debug-toolbar = "*"
 black = "*"
 flake8 = "*"
+pyre-check = "*"
 
 [requires]
 python_version = "3.7"
