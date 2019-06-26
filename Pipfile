@@ -14,8 +14,7 @@ ipython = "*"
 django-extensions = "*"
 django-debug-toolbar = "*"
 black = "*"
-flake8 = "*"
-pyre-check = "*"
+pylint = "*"
 
 [requires]
 python_version = "3.7"

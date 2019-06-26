@@ -9,6 +9,7 @@ from core.models import UserModel
 
 CREATE_USER_URL = reverse("users:create")
 TOKEN_URL = reverse("users:token")
+ME_URL = reverse("users:me")
 
 
 def create_user(**params):
@@ -93,3 +94,43 @@ class PublicUserApiTests(TestCase):
 
         self.assertNotIn("token", res.data)
         self.assertTrue(res.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_retrieve_user_unauthorized(self):
+        """Test that authentication is required for users"""
+        res: Response = self.client.get(ME_URL)
+
+        self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
+
+
+class PrivateUserApiTest(TestCase):
+    """Test API requests that require authentication"""
+
+    def setUp(self):
+        self.user: UserModel = create_user(
+            email="test@example.com", password="password123", name="test user"
+        )
+        self.client = APIClient()
+        self.client.force_authenticate(user=self.user)
+
+    def test_retrieve_profile_success(self):
+        """Test retrieving profile for logged in user"""
+        res: Response = self.client.get(ME_URL)
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(res.data, {"name": self.user.name, "email": self.user.email})
+
+    def test_post_me_not_allowed(self):
+        """Test that POST is not allowed not allowed on the ME_URL"""
+        res: Response = self.client.post(ME_URL, {})
+
+        self.assertEqual(res.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+
+    def test_update_user_profile(self):
+        """Test that updating user profile is successful for authenticated user"""
+        new_user_info = {"name": "new name", "password": "newpassword"}
+        res: Response = self.client.patch(ME_URL, new_user_info)
+
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.name, new_user_info.get("name"))
+        self.assertTrue(self.user.check_password(new_user_info.get("password")))
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
