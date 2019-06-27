@@ -42,6 +42,8 @@ class UserModel(AbstractBaseUser, PermissionsMixin):
 
 
 class Tag(models.Model):
+    """Tags for recipes"""
+
     name = models.CharField(max_length=255)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
 
