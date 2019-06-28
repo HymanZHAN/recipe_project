@@ -27,7 +27,7 @@ class PublicTagsApiTests(TestCase):
 
 
 class PrivateTagsApiTest(TestCase):
-    """Test the authorized user tags API"""
+    """Test the authorized usage of tags API"""
 
     def setUp(self):
         self.user: UserModel = get_user_model().objects.create_user(
@@ -42,20 +42,19 @@ class PrivateTagsApiTest(TestCase):
         Tag.objects.create(user=self.user, name="Dessert")
 
         res: Response = self.client.get(TAGS_URL)
-
         tags = Tag.objects.all().order_by("-name")
-        serializer: ModelSerializer = TagSerializer(tags, many=True)
+        serializered_tags: ModelSerializer = TagSerializer(tags, many=True)
 
         self.assertEqual(res.status_code, status.HTTP_200_OK)
-        self.assertEqual(res.data, serializer.data)
+        self.assertEqual(res.data, serializered_tags.data)
 
     def test_tags_limited_to_user(self):
-        """Test that tags returned are for the authenticated user only"""
+        """Test that tags returned are for the current authenticated user only"""
         another_user = get_user_model().objects.create_user(
             "another@example.com", "passwordanother"
         )
-        Tag.objects.create(user=another_user, name="Beef")
-        tag: Tag = Tag.objects.create(user=self.user, name="Chicken")
+        Tag.objects.create(user=another_user, name="Chinese")
+        tag: Tag = Tag.objects.create(user=self.user, name="Japanese")
 
         res: Response = self.client.get(TAGS_URL)
 
