@@ -18,7 +18,7 @@ class PublicIngredientApiTest(TestCase):
         self.client = APIClient()
 
     def test_login_required(self):
-        """Test that lgoin is always required for this endpoint"""
+        """Test that login is always required for this endpoint"""
         res: Response = self.client.get(INGREDIENT_URL)
 
         self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
@@ -41,7 +41,7 @@ class PrivateIngredientApiTest(TestCase):
         Ingredient.objects.create(user=self.user, name="Celery")
 
         res: Response = self.client.get(INGREDIENT_URL)
-        ingredients = Ingredient.objects.all().order_by("-name")
+        ingredients = Ingredient.objects.all().order_by("name")
         serializered_ingredients: ModelSerializer = IngredientSerializer(
             ingredients, many=True
         )
@@ -63,3 +63,21 @@ class PrivateIngredientApiTest(TestCase):
 
         self.assertEqual(len(res.data), 1)
         self.assertEqual(res.data[0].get("name"), ingredient.name)
+
+    def test_create_ingredient_successful(self):
+        """Test that creating a new ingredient is successful"""
+        payload = {"name": "Black Pepper"}
+        self.client.post(INGREDIENT_URL, payload)
+
+        new_ingredient_exists = Ingredient.objects.filter(
+            user=self.user, name=payload.get("name")
+        ).exists()
+
+        self.assertTrue(new_ingredient_exists)
+
+    def test_create_ingredient_invalid(self):
+        """Test creating invalid ingredient fails"""
+        invalid_payload = {"name": ""}
+        res: Response = self.client.post(INGREDIENT_URL, invalid_payload)
+
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
