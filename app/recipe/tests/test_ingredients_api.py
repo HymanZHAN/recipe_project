@@ -25,7 +25,7 @@ class PublicIngredientApiTest(TestCase):
 
 
 class PrivateIngredientApiTest(TestCase):
-    """Test the authorized usage of ingredient api"""
+    """Test the authorized usage of ingredient API"""
 
     def setUp(self):
         self.user: UserModel = get_user_model().objects.create_user(
