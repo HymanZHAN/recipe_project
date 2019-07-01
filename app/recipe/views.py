@@ -4,7 +4,12 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.viewsets import GenericViewSet, ModelViewSet
 
 from core.models import Tag, Ingredient, Recipe
-from recipe.serializers import TagSerializer, IngredientSerializer, RecipeSerializer
+from recipe.serializers import (
+    TagSerializer,
+    IngredientSerializer,
+    RecipeSerializer,
+    RecipeDetailSerializer,
+)
 
 
 class BaseRecipeAttrViewset(GenericViewSet, ListModelMixin, CreateModelMixin):
@@ -51,3 +56,10 @@ class RecipeViewSet(ModelViewSet):
     def perform_create(self, serializer):
         """Associate the created recipe with the current user"""
         serializer.save(user=self.request.user)
+
+    def get_serializer_class(self):
+        """Return appropriate serializer class"""
+        if self.action == "retrieve":
+            return RecipeDetailSerializer
+
+        return self.serializer_class
