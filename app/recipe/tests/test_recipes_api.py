@@ -1,15 +1,24 @@
+import os
+import tempfile
+from decimal import Decimal
+
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
+from PIL import Image
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.test import APIClient
-from decimal import Decimal
 
-from core.models import Recipe, Ingredient, Tag
-from recipe.serializers import RecipeSerializer, ModelSerializer, RecipeDetailSerializer
+from core.models import Ingredient, Recipe, Tag
+from recipe.serializers import ModelSerializer, RecipeDetailSerializer, RecipeSerializer
 
 RECIPES_URL = reverse("recipe:recipe-list")
+
+
+def image_upload_url(recipe_id):
+    """Return url for recipe image uploads"""
+    return reverse("recipe:recipe-upload-image", args=[recipe_id])
 
 
 def recipe_detail_url(recipe_id):
@@ -19,7 +28,6 @@ def recipe_detail_url(recipe_id):
 
 def sample_tag(user, name="Main Course"):
     """Create and return a sample tag"""
-
     return Tag.objects.create(user=user, name=name)
 
 
@@ -30,11 +38,8 @@ def sample_ingredient(user, name="Cinnamon"):
 
 def sample_recipe(user, **params):
     """Create and return a sample recipe"""
-
-    defaults = {"title": "Sample Recipe", "time_minutes": 10, "price": 5.00}
-
+    defaults = {"title": "Sample Recipe", "time_minutes": 10, "price": Decimal("4.99")}
     defaults.update(params)
-
     return Recipe.objects.create(user=user, **defaults)
 
 
@@ -190,3 +195,41 @@ class PrivateRecipeApiTests(TestCase):
         self.assertEqual(recipe.price, payload.get("price"))
 
         self.assertEqual(recipe.tags.count(), 0)
+
+
+class RecipeImageUploadTests(TestCase):
+    """ Test uploading image to a specific recipe"""
+
+    def setUp(self):
+        self.client = APIClient()
+        self.user = get_user_model().objects.create_user(
+            "test@example.com", "password123"
+        )
+        self.client.force_authenticate(self.user)
+        self.recipe: Recipe = sample_recipe(user=self.user)
+
+    def tearDown(self):
+        self.recipe.image.delete()
+
+    def test_upload_image_to_recipe(self):
+        """Test upload an image to a recipe"""
+        url = image_upload_url(self.recipe.id)
+        with tempfile.NamedTemporaryFile(suffix=".jpg") as ntf:
+            img = Image.new("RGB", (10, 10))
+            img.save(ntf, format="JPEG")
+            ntf.seek(0)
+            res: Response = self.client.post(url, {"image": ntf}, format="multipart")
+
+        self.recipe.refresh_from_db()
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertIn("image", res.data)
+        self.assertTrue(os.path.exists(self.recipe.image.path))
+
+    def test_upload_image_bad_request(self):
+        """Test uploading an invalid image"""
+        url = image_upload_url(self.recipe.id)
+        res: Response = self.client.post(
+            url, {"image": "This is a string!"}, format="multipart"
+        )
+
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
