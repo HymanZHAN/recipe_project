@@ -4,6 +4,7 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.test import APIClient
+from decimal import Decimal
 
 from core.models import Recipe, Ingredient, Tag
 from recipe.serializers import RecipeSerializer, ModelSerializer, RecipeDetailSerializer
@@ -106,7 +107,7 @@ class PrivateRecipeApiTests(TestCase):
 
     def test_create_basic_recipe(self):
         """Test creating recipe"""
-        payload = {"title": "Test recipe", "time_minutes": 30, "price": 5.55}
+        payload = {"title": "Test recipe", "time_minutes": 30, "price": Decimal("5.55")}
         res: Response = self.client.post(RECIPES_URL, payload)
 
         self.assertEqual(res.status_code, status.HTTP_201_CREATED)
