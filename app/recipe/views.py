@@ -5,7 +5,7 @@ from rest_framework.viewsets import GenericViewSet, ModelViewSet
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework import status
-
+from django.db.models import QuerySet
 from core.models import Tag, Ingredient, Recipe
 from recipe.serializers import (
     TagSerializer,
@@ -48,14 +48,30 @@ class IngredientViewSet(BaseRecipeAttrViewset):
 class RecipeViewSet(ModelViewSet):
     """Manage recipes in the database"""
 
-    queryset = Recipe.objects.all()
+    queryset: QuerySet = Recipe.objects.all()
     serializer_class = RecipeSerializer
     authentication_classes = (TokenAuthentication,)
     permission_classes = (IsAuthenticated,)
 
+    def _params_to_ints(self, qs):
+        """Convert a list of string IDs to a list of integers"""
+        print([int(str_id) for str_id in qs.split(",")])
+        return [int(str_id) for str_id in qs.split(",")]
+
     def get_queryset(self):
         """Return recipe objects for the current authenticated user only"""
-        return self.queryset.filter(user=self.request.user).order_by("-id")
+        tags = self.request.query_params.get("tags")
+        ingredients = self.request.query_params.get("ingredients")
+        queryset = Recipe.objects.all()
+
+        if tags:
+            tag_ids = self._params_to_ints(tags)
+            queryset = queryset.filter(tags__in=tag_ids).distinct()
+        if ingredients:
+            ingredient_ids = self._params_to_ints(ingredients)
+            queryset = queryset.filter(ingredients__in=ingredient_ids).distinct()
+
+        return queryset.filter(user=self.request.user).order_by("-id")
 
     def perform_create(self, serializer):
         """Associate the created recipe with the current user"""
