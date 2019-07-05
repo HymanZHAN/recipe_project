@@ -24,7 +24,11 @@ class BaseRecipeAttrViewset(GenericViewSet, ListModelMixin, CreateModelMixin):
 
     def get_queryset(self):
         """Return objects for the current authenticated user only"""
-        return self.queryset.filter(user=self.request.user).order_by("name")
+        assigned_only = bool(int(self.request.query_params.get("assigned_only", 0)))
+        queryset = self.queryset
+        if assigned_only:
+            queryset = queryset.filter(recipe__isnull=False).distinct()
+        return queryset.filter(user=self.request.user).order_by("name")
 
     def perform_create(self, serializer):
         """Create a new object and associate the current user with it"""
@@ -55,7 +59,6 @@ class RecipeViewSet(ModelViewSet):
 
     def _params_to_ints(self, qs):
         """Convert a list of string IDs to a list of integers"""
-        print([int(str_id) for str_id in qs.split(",")])
         return [int(str_id) for str_id in qs.split(",")]
 
     def get_queryset(self):
